@@ -13,14 +13,15 @@
 
 # Примеры:
 <figure>
-    <img src="https://i.imgur.com/PTopNeS.png"
+    <img src="https://i.e-z.host/twjs04ve.png"
          alt="image1">
     <figcaption>Сообщение от бота в канале</figcaption>
 </figure>
 <figure>
-    <img src="https://i.imgur.com/ls6qMOK.png"
+    <img src="https://i.e-z.host/m2p2fz97.png"
          alt="image2">
     <figcaption>Ответ бота в личных сообщениях</figcaption>
 </figure>
+
 
 Отдельно хотел бы поблагодарить [Lavacat](https://t.me/ltslavacat) и других людей, которые помогали с ботом. Спасибо за поддержку.

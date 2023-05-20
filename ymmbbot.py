@@ -11,14 +11,11 @@ BOT_TOKEN = config.BOT_TOKEN
 YANDEX_MUSIC_TOKEN = config.YANDEX_MUSIC_TOKEN
 YOUR_CHANNEL = config.YOUR_CHANNEL
 YOUR_URL = config.YOUR_URL
-
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 client = Client(YANDEX_MUSIC_TOKEN)
 client.init()
-
-last_track = ''
 
 
 async def get_music():
@@ -46,13 +43,14 @@ async def get_lyrics() -> str:
     try:
         lyrics = last_track.get_lyrics('TEXT')
 
-        lyrics = f'{message}\n\n{lyrics.fetch_lyrics()}\n\nИсточник: {lyrics.major.pretty_name}\n\nBOT CREATED BY MIPOHBOPOHIH'
+        lyrics = f'{message}\n\n{lyrics.fetch_lyrics()}\n\nИсточник: {lyrics.major.pretty_name}\n\nBOT CREATED BY ' \
+                 f'MIPOHBOPOHIH'
     except:
         lyrics = f'{message}\nТекст песни отсутствует.\n\nBOT CREATED BY MIPOHBOPOHIH'
     return lyrics
 
 
-async def get_imguri(last_track):
+async def get_imguri(last_track) -> str:
     img_uri = f"https://{last_track.cover_uri[:-2]}400x400"
     return img_uri
 
@@ -68,14 +66,28 @@ async def get_downloadlink(last_track):
     return direct_link
 
 
+async def get_artists(last_track):
+    artists = ', '.join(last_track.artists_name())
+    return artists
+
+
+async def get_trackid(last_track):
+    last_trackid = last_track.track_id
+    result = last_trackid.split(':')[0]
+    return result
+
+
 USERS = []
 
 
 async def send_message_every_minute():
     while True:
         message_text = await get_channel_message()
-        inline_btn_1 = InlineKeyboardButton('Узнать текст песни', url=YOUR_URL)
-        inline_keyboard = InlineKeyboardMarkup(row_width=2).add(inline_btn_1)
+        last_trackid = await get_trackid(last_track)
+        inline_btn_1 = InlineKeyboardButton('В ЛС', url=YOUR_URL)
+        inline_btn_2 = InlineKeyboardButton('song.link', url=f'https://song.link/ya/{last_trackid}')
+        inline_btn_3 = InlineKeyboardButton('Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_trackid}')
+        inline_keyboard = InlineKeyboardMarkup(row_width=2).add(inline_btn_1, inline_btn_2, inline_btn_3)
         for user in USERS:
             chat_id = user['chat_username']
             message_id = user['message_id']
@@ -89,7 +101,7 @@ async def send_message_every_minute():
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     img_uri = await get_imguri(last_track)
-
+    artist = await get_artists(last_track)
     direct_link = await get_downloadlink(last_track)
     lyr = await get_lyrics()
     await bot.send_photo(chat_id=message.chat.id, photo=img_uri)

@@ -13,7 +13,7 @@
 
 # Примеры:
 <figure>
-    <img src="https://i.e-z.host/twjs04ve.png"
+    <img src="https://i.e-z.host/136w34p7.png"
          alt="image1">
     <figcaption>Сообщение от бота в канале</figcaption>
 </figure>

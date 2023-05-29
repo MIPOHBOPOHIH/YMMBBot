@@ -13,15 +13,12 @@
 
 # Примеры:
 <figure>
-    <img src="https://i.e-z.host/136w34p7.png"
+    <img src="https://mipohbopohih.skidded.lol/5b9y8ejj.png"
          alt="image1">
     <figcaption>Сообщение от бота в канале</figcaption>
 </figure>
 <figure>
-    <img src="https://i.e-z.host/m2p2fz97.png"
+    <img src="https://mipohbopohih.skidded.lol/5xiojrlv.png"
          alt="image2">
     <figcaption>Ответ бота в личных сообщениях</figcaption>
 </figure>
-
-
-Отдельно хотел бы поблагодарить [Lavacat](https://t.me/ltslavacat) и других людей, которые помогали с ботом. Спасибо за поддержку.

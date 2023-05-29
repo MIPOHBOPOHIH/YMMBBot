@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from yandex_music import Client
 import config
-
+import os
 BOT_TOKEN = config.BOT_TOKEN
 YANDEX_MUSIC_TOKEN = config.YANDEX_MUSIC_TOKEN
 YOUR_CHANNEL = config.YOUR_CHANNEL
@@ -51,7 +51,7 @@ async def get_lyrics() -> str:
 
 
 async def get_imguri(last_track) -> str:
-    img_uri = f"https://{last_track.cover_uri[:-2]}400x400"
+    img_uri = f"https://{last_track.cover_uri[:-2]}1000x1000"
     return img_uri
 
 
@@ -100,13 +100,18 @@ async def send_message_every_minute():
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
+    message_reply = await message.reply('В процессе..')
     img_uri = await get_imguri(last_track)
     artist = await get_artists(last_track)
     direct_link = await get_downloadlink(last_track)
     lyr = await get_lyrics()
-    await bot.send_photo(chat_id=message.chat.id, photo=img_uri)
-    await bot.send_audio(chat_id=message.chat.id, audio=direct_link)
-    await message.reply(lyr)
+    title = last_track.title
+    duration_ms = int(last_track.duration_ms / 1000)
+    file_name = f'{artist} - {title}.mp3'
+    last_track.download(file_name)
+    await bot.send_audio(message.chat.id, title=title, performer=artist, duration=duration_ms, thumb=img_uri, audio=open(file_name, "rb"))
+    os.remove(file_name)
+    await bot.edit_message_text(text=lyr, chat_id=message.chat.id, message_id=message_reply.message_id)
 
 
 async def on_startup(dp):

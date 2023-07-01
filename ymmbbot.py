@@ -1,53 +1,77 @@
-import asyncio
+from asyncio import sleep, get_event_loop
 import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
-from yandex_music import Client
+from yandex_music import ClientAsync as Client
+import pylast
 import config
-import os
+from io import BytesIO
+from limited import LimitedDict
+from warnings import filterwarnings
+
 BOT_TOKEN = config.BOT_TOKEN
 YANDEX_MUSIC_TOKEN = config.YANDEX_MUSIC_TOKEN
 YOUR_CHANNEL = config.YOUR_CHANNEL
 YOUR_URL = config.YOUR_URL
+LASTFM_API_KEY = config.LASTFM_API_KEY
+LASTFM_API_SECRET = config.LASTFM_API_SECRET
+LASTFM_USERNAME = config.LASTFM_USERNAME
+USERS = []
+CACHE = LimitedDict(limit=5)
+
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
+
 client = Client(YANDEX_MUSIC_TOKEN)
-client.init()
+network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET)
+
+filterwarnings("ignore", category=DeprecationWarning)
+
+
+async def get_track_bytes() -> bytes:
+    if last_track.id not in CACHE:
+        CACHE[last_track.id] = await last_track.download_bytes_async()
+    return CACHE[last_track.id]
 
 
 async def get_music():
     global last_track
     while True:
-        queues = client.queues_list()
-        last_queue = client.queue(queues[0].id)
-        last_track_id = last_queue.get_current_track()
-        last_track = last_track_id.fetch_track()
-        await asyncio.sleep(60)
+        try:
+            queues = await client.queues_list()
+            last_queue = await client.queue(queues[0].id)
+            last_track_id = last_queue.get_current_track()
+            last_track = await last_track_id.fetch_track_async()
+        except:
+            user = network.get_user(LASTFM_USERNAME)
+            now_playing = user.get_now_playing()
+            try:
+                artist = now_playing.get_artist().get_name()
+                title = now_playing.get_title()
+                searching_track = await client.search(f'{artist} {title}')
+                last_track = searching_track['best']['result']
+            except:
+                recent_tracks = user.get_recent_tracks(limit=1)
+                track = recent_tracks[0].track
+                artist = track.artist.name
+                title = track.title
+                searching_track = await client.search(f'{artist} {title}')
+                last_track = searching_track['best']['result']
+        await sleep(10)
 
 
 async def get_channel_message() -> str:
-    artists = ', '.join(last_track.artists_name())
+    try:
+        artists = ', '.join(last_track.artists_name())
+    except NameError:
+        return ""
     title = last_track.title
     message = f"Слушает сейчас: {artists} - {title}."
 
     return message
-
-
-async def get_lyrics() -> str:
-    artists = ', '.join(last_track.artists_name())
-    title = last_track.title
-    message = f'Сейчас играет: {artists} - {title}'
-    try:
-        lyrics = last_track.get_lyrics('TEXT')
-
-        lyrics = f'{message}\n\n{lyrics.fetch_lyrics()}\n\nИсточник: {lyrics.major.pretty_name}\n\nBOT CREATED BY ' \
-                 f'MIPOHBOPOHIH'
-    except:
-        lyrics = f'{message}\nТекст песни отсутствует.\n\nBOT CREATED BY MIPOHBOPOHIH'
-    return lyrics
 
 
 async def get_imguri(last_track) -> str:
@@ -55,38 +79,39 @@ async def get_imguri(last_track) -> str:
     return img_uri
 
 
-async def get_artist(last_track):
+async def get_artist(last_track) -> str:
     artists = ', '.join(last_track.artists_name())
     return artists
 
 
-async def get_downloadlink(last_track):
+async def get_downloadlink(last_track) -> str:
     download_info = last_track.get_download_info(get_direct_links=True)
     direct_link = download_info[0].direct_link
     return direct_link
 
 
-async def get_artists(last_track):
+async def get_artists(last_track) -> str:
     artists = ', '.join(last_track.artists_name())
     return artists
 
 
-async def get_trackid(last_track):
-    last_trackid = last_track.track_id
-    result = last_trackid.split(':')[0]
+async def get_trackid(last_track) -> str:
+    last_track_id = last_track.track_id
+    result = last_track_id.split(':')[0]
     return result
 
 
-USERS = []
-
-
-async def send_message_every_minute():
+async def send_message_every_minute() -> None:
     while True:
         message_text = await get_channel_message()
-        last_trackid = await get_trackid(last_track)
+        try:
+            last_track_id = await get_trackid(last_track)
+        except NameError:
+            await sleep(3)
+            continue
         inline_btn_1 = InlineKeyboardButton('В ЛС', url=YOUR_URL)
-        inline_btn_2 = InlineKeyboardButton('song.link', url=f'https://song.link/ya/{last_trackid}')
-        inline_btn_3 = InlineKeyboardButton('Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_trackid}')
+        inline_btn_2 = InlineKeyboardButton('song.link', url=f'https://song.link/ya/{last_track_id}')
+        inline_btn_3 = InlineKeyboardButton('Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_track_id}')
         inline_keyboard = InlineKeyboardMarkup(row_width=2).add(inline_btn_1, inline_btn_2, inline_btn_3)
         for user in USERS:
             chat_id = user['chat_username']
@@ -95,7 +120,7 @@ async def send_message_every_minute():
             message_text_with_time = f"{message_text}\nВремя: {current_time}\n\nBOT CREATED BY MIPOHBOPOHIH"
             await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=message_text_with_time,
                                         reply_markup=inline_keyboard)
-        await asyncio.sleep(60)
+        await sleep(10)
 
 
 @dp.message_handler(commands=['start'])
@@ -103,24 +128,25 @@ async def process_start_command(message: types.Message):
     message_reply = await message.reply('В процессе..')
     img_uri = await get_imguri(last_track)
     artist = await get_artists(last_track)
-    direct_link = await get_downloadlink(last_track)
-    lyr = await get_lyrics()
     title = last_track.title
-    duration_ms = int(last_track.duration_ms / 1000)
+    duration_ms = last_track.duration_ms // 1000
     file_name = f'{artist} - {title}.mp3'
-    last_track.download(file_name)
-    await bot.send_audio(message.chat.id, title=title, performer=artist, duration=duration_ms, thumb=img_uri, audio=open(file_name, "rb"))
-    os.remove(file_name)
-    await bot.edit_message_text(text=lyr, chat_id=message.chat.id, message_id=message_reply.message_id)
+    raw_audio = await get_track_bytes()
+    audio = BytesIO(raw_audio)
+    audio.name = file_name
+    await bot.send_audio(message.chat.id, title=title, performer=artist, duration=duration_ms, thumb=img_uri,
+                         audio=audio)
+    await message_reply.delete()
 
 
 async def on_startup(dp):
+    await client.init()
     message = await bot.send_message(chat_id=YOUR_CHANNEL, text='BOT CREATED BY MIPOHBOPOHIH')
     USERS.append({'chat_username': YOUR_CHANNEL, 'message_id': message.message_id})
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
     loop.create_task(get_music())
     loop.create_task(send_message_every_minute())
-    executor.start_polling(dp, on_startup=on_startup)
+    executor.start_polling(dp, on_startup=on_startup, loop=loop)

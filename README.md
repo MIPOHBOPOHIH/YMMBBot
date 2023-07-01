@@ -2,6 +2,8 @@
 
 ## YMMBBot основан на базе моего прошлого бота, [lastbot](https://codeberg.org/MIPOHBOPOHIH/Lastbot), если вам нужен практически такой же бот, только для Last.fm, можете взглянуть на него
 
+
+### Теперь бот поддерживает "Мою волну"! Для этого используется [last.fm](https://last.fm)
 ###  Бот отправляет в указанный телеграм канал обновляющееся сообщение, которое включает в себя текущую песню(Автор - Название песни), а в кнопке ниже - переход в ЛС к боту, который отправляет текст текущей песни.
 
 # Как запустить:
@@ -13,12 +15,12 @@
 
 # Примеры:
 <figure>
-    <img src="https://r2.e-z.host/93d59d5b-a329-4adb-aa14-a8a14eac4daf/5b9y8ejj.png"
+    <img src="images/channel.png"
          alt="image1">
     <figcaption>Сообщение от бота в канале</figcaption>
 </figure>
 <figure>
-    <img src="https://r2.e-z.host/93d59d5b-a329-4adb-aa14-a8a14eac4daf/5xiojrlv.png"
+    <img src="images/direct_messages.png"
          alt="image2">
     <figcaption>Ответ бота в личных сообщениях</figcaption>
 </figure>

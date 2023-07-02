@@ -26,7 +26,11 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 client = Client(YANDEX_MUSIC_TOKEN)
-network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET)
+try:
+    network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET)
+    last_fm_connected = True
+except:
+    last_fm_connected = False
 
 filterwarnings("ignore", category=DeprecationWarning)
 
@@ -40,26 +44,32 @@ async def get_track_bytes() -> bytes:
 async def get_music():
     global last_track
     while True:
-        try:
+        if last_fm_connected:
+            try:
+                queues = await client.queues_list()
+                last_queue = await client.queue(queues[0].id)
+                last_track_id = last_queue.get_current_track()
+                last_track = await last_track_id.fetch_track_async()
+            except:
+                user = network.get_user(LASTFM_USERNAME)
+                now_playing = user.get_now_playing()
+                try:
+                    artist = now_playing.get_artist().get_name()
+                    title = now_playing.get_title()
+                    searching_track = await client.search(f'{artist} {title}')
+                    last_track = searching_track['best']['result']
+                except:
+                    recent_tracks = user.get_recent_tracks(limit=1)
+                    track = recent_tracks[0].track
+                    artist = track.artist.name
+                    title = track.title
+                    searching_track = await client.search(f'{artist} {title}')
+                    last_track = searching_track['best']['result']
+        else:
             queues = await client.queues_list()
             last_queue = await client.queue(queues[0].id)
             last_track_id = last_queue.get_current_track()
             last_track = await last_track_id.fetch_track_async()
-        except:
-            user = network.get_user(LASTFM_USERNAME)
-            now_playing = user.get_now_playing()
-            try:
-                artist = now_playing.get_artist().get_name()
-                title = now_playing.get_title()
-                searching_track = await client.search(f'{artist} {title}')
-                last_track = searching_track['best']['result']
-            except:
-                recent_tracks = user.get_recent_tracks(limit=1)
-                track = recent_tracks[0].track
-                artist = track.artist.name
-                title = track.title
-                searching_track = await client.search(f'{artist} {title}')
-                last_track = searching_track['best']['result']
         await sleep(10)
 
 

@@ -1,19 +1,41 @@
-# YMMBBot *Yandex Music MipohBopohih Bot*
+<p align="center">
+    <img width="248" height="250" src="images/logo.png">
+</p>
 
-## YMMBBot основан на базе моего прошлого бота, [lastbot](https://codeberg.org/MIPOHBOPOHIH/Lastbot), если вам нужен практически такой же бот, только для Last.fm, можете взглянуть на него
+# YMMBBot
 
+Простой бот для отображения текущей песни 
 
-### Теперь бот поддерживает "Мою волну"! Для этого используется [last.fm](https://last.fm)
-###  Бот отправляет в указанный телеграм канал обновляющееся сообщение, которое включает в себя текущую песню(Автор - Название песни), а в кнопке ниже - переход в ЛС к боту, который отправляет текст текущей песни.
+**Поддерживается Моя Волна Через Last.fm**
 
-# Как запустить:
-1. Скачайте проект и разархивируйте проект.
-2. Откройте терминал внутри папки и установите все библиотеки. Вы можете это сделать при помощи
-`pip install -r requirements.txt`
-3. Заполните `config.py`, там всё довольно подробно описано что и куда вставлять.
-4. Запустите бота, можете сделать в терминале введя `python ymmbbot.py`
+# Как использовать?:
+Сначала, вам надо установить Python и зависимости бота. Позже - создать самого бота у [https://t.me/BotFather](@BotFather) 
+и включить у него Inline Mode.
 
-# Примеры:
+## Скачиваем ymmbbot
+```shell
+git clone https://github.com/MIPOHBOPOHIH/ymmbbot
+# Вам надо быть в `ymmbbot` для дальнейшей работы
+cd ymmbbot
+```
+
+## Устанавливаем зависимости
+
+```shell
+# Допустим, вы уже установили питон
+pip install pip --upgrade
+pip install -r requirements.txt
+```
+
+После этого вы должны заполнить `config.py`
+После заполнения читайте следующую главу
+
+## Запускаем
+
+```shell
+python bot.py
+```
+# Картинки-примеры:
 <figure>
     <img src="images/channel.png"
          alt="image1">
@@ -23,4 +45,9 @@
     <img src="images/direct_messages.png"
          alt="image2">
     <figcaption>Ответ бота в личных сообщениях</figcaption>
+</figure>
+<figure>
+    <img src="images/inline.png"
+        alt="image3">
+    <figcaption>Inline в чатах</figcaption>
 </figure>

@@ -3,14 +3,17 @@ from asyncio import get_event_loop, sleep
 from io import BytesIO
 from warnings import filterwarnings
 import pylast
+import asyncio
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils import executor
+from aiogram.fsm.storage.memory import MemoryStorage
 from yandex_music import ClientAsync as Client
 from aiogram.types import *
 import config
 from limited import LimitedDict
+from aiogram.enums import ParseMode
+from aiogram.filters import CommandStart
+from aiogram import Router
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 BOT_TOKEN = config.BOT_TOKEN
 YANDEX_MUSIC_TOKEN = config.YANDEX_MUSIC_TOKEN
@@ -20,10 +23,11 @@ LASTFM_API_SECRET = config.LASTFM_API_SECRET
 LASTFM_USERNAME = config.LASTFM_USERNAME
 USERS = []
 CACHE = LimitedDict(limit=5)
-
+router = Router(name=__name__)
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
+dp.include_router(router)
 
 client = Client(YANDEX_MUSIC_TOKEN)
 try:
@@ -72,6 +76,7 @@ async def get_music():
             last_track_id = last_queue.get_current_track()
             last_track = await last_track_id.fetch_track_async()
         await sleep(10)
+        print('хуй')
 
 
 async def get_channel_message() -> str:
@@ -120,25 +125,28 @@ async def send_message_every_minute() -> None:
         except NameError:
             await sleep(3)
             continue
-        inline_btn_1 = InlineKeyboardButton('В ЛС', url=YOUR_URL)
-        inline_btn_2 = InlineKeyboardButton(
-            'Остальные площадки', url=f'https://song.link/ya/{last_track.id}')
-        inline_btn_3 = InlineKeyboardButton(
-            'Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_track.id}')
-        inline_keyboard = InlineKeyboardMarkup(row_width=2).add(
-            inline_btn_1, inline_btn_2, inline_btn_3)
+        builder = InlineKeyboardBuilder()
+        builder.add(types.InlineKeyboardButton(
+            text='В ЛС', url=YOUR_URL)
+        )
+        builder.add(types.InlineKeyboardButton(
+            text='Остальные площадки', url=f'https://song.link/ya/{last_track.id}')
+        )
+        builder.add(types.InlineKeyboardButton(
+            text='В ЛС', url=f'https://music.yandex.ru/track/{last_track.id}')
+        )
         for user in USERS:
             chat_id = user['chat_username']
             message_id = user['message_id']
             current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             message_text_with_time = f"{message_text}\nВремя: {current_time}\n\nBOT CREATED BY MIPOHBOPOHIH"
             await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=message_text_with_time,
-                                        reply_markup=inline_keyboard)
+                                        reply_markup=builder.as_markup())
         await sleep(10)
 
 
-@dp.message_handler(commands=['start'])
-async def process_start_command(message: types.Message):
+@dp.message(CommandStart())
+async def command_start_handler(message: Message) -> None:
     message_reply = await message.reply('В процессе..')
     img_uri = await get_imguri(last_track)
     artist = await get_artists(last_track)
@@ -146,22 +154,19 @@ async def process_start_command(message: types.Message):
     duration_ms = last_track.duration_ms // 1000
     file_name = f'{artist} - {title}.mp3'
     raw_audio = await get_track_bytes()
-    audio = BytesIO(raw_audio)
+    audio = BufferedInputFile(raw_audio, filename=file_name)
     audio.name = file_name
-    await bot.send_audio(message.chat.id, title=title, performer=artist, duration=duration_ms, thumb=img_uri,
+    await bot.send_audio(message.chat.id, title=title, performer=artist, duration=duration_ms, thumbnail=img_uri,
                          audio=audio)
     await message_reply.delete()
 
 
-@dp.inline_handler()
-async def handle_inline_query(inline_query: types.InlineQuery):
-    inline_btn_1 = InlineKeyboardButton('В ЛС', url=YOUR_URL)
-    inline_btn_2 = InlineKeyboardButton(
-        'Остальные площадки', url=f'https://song.link/ya/{last_track.id}')
-    inline_btn_3 = InlineKeyboardButton(
-        'Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_track.id}')
-    inline_keyboard = InlineKeyboardMarkup(row_width=1).add(
-        inline_btn_1, inline_btn_2, inline_btn_3)
+@router.inline_query()
+async def inline_query_handler(inline_query: types.InlineQuery):
+    builder = InlineKeyboardBuilder()
+    # builder.button(text='В ЛС', url=YOUR_URL)
+    builder.button(text='Остальные площадки', url=f'https://song.link/ya/{last_track.id}')
+    builder.button(text='Песня в ЯМ', url=f'https://music.yandex.ru/track/{last_track.id}')
     audio = await get_downloadlink(last_track)
     artist = await get_artists(last_track)
     title = last_track.title
@@ -178,7 +183,7 @@ async def handle_inline_query(inline_query: types.InlineQuery):
         performer=artist,
         audio_duration=duration,
         caption=response_message,
-        reply_markup=inline_keyboard
+        reply_markup=builder.as_markup()
     )
 
     await bot.answer_inline_query(inline_query.id, results=[result], cache_time=1)
@@ -194,8 +199,12 @@ async def on_startup(dp: Dispatcher) -> None:
                   'message_id': message.message_id})
 
 
+async def main() -> None:
+    await dp.start_polling(bot, on_startup=on_startup, loop=loop)
+
+
 if __name__ == '__main__':
     loop = get_event_loop()
     loop.create_task(get_music())
     loop.create_task(send_message_every_minute())
-    executor.start_polling(dp, on_startup=on_startup, loop=loop)
+    loop.run_until_complete(main())

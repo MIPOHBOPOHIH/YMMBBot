@@ -21,6 +21,7 @@ YOUR_CHANNEL = config.YOUR_CHANNEL
 LASTFM_API_KEY = config.LASTFM_API_KEY
 LASTFM_API_SECRET = config.LASTFM_API_SECRET
 LASTFM_USERNAME = config.LASTFM_USERNAME
+YOUR_URL = 'https://mipoh.ru'
 USERS = []
 CACHE = LimitedDict(limit=5)
 router = Router(name=__name__)
@@ -30,6 +31,7 @@ dp = Dispatcher(storage=storage)
 dp.include_router(router)
 
 client = Client(YANDEX_MUSIC_TOKEN)
+
 try:
     network = pylast.LastFMNetwork(
         api_key=LASTFM_API_KEY, api_secret=LASTFM_API_SECRET)
@@ -118,6 +120,11 @@ async def get_trackid(last_track) -> str:
 
 
 async def send_message_every_minute() -> None:
+    message = await bot.send_message(chat_id=YOUR_CHANNEL, text='BOT CREATED BY MIPOHBOPOHIH')
+    print('сообщение отправлено')
+    USERS.append({'chat_username': YOUR_CHANNEL,
+                  'message_id': message.message_id})
+
     while True:
         message_text = await get_channel_message()
         try:
@@ -189,21 +196,15 @@ async def inline_query_handler(inline_query: types.InlineQuery):
     await bot.answer_inline_query(inline_query.id, results=[result], cache_time=1)
 
 
-async def on_startup(dp: Dispatcher) -> None:
-    global YOUR_URL
-    await client.init()
-    me = await bot.get_me()
-    YOUR_URL = f"https://t.me/{me.username}?start"
-    message = await bot.send_message(chat_id=YOUR_CHANNEL, text='BOT CREATED BY MIPOHBOPOHIH')
-    USERS.append({'chat_username': YOUR_CHANNEL,
-                  'message_id': message.message_id})
 
 
 async def main() -> None:
-    await dp.start_polling(bot, on_startup=on_startup, loop=loop)
+    await client.init()
+    await dp.start_polling(bot, loop=loop)
 
 
 if __name__ == '__main__':
+
     loop = get_event_loop()
     loop.create_task(get_music())
     loop.create_task(send_message_every_minute())

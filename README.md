@@ -28,7 +28,6 @@ pip install -r requirements.txt
 <br>После заполнения читайте следующую главу.
 
 ## Запускаем
-
 ```shell
 python bot.py
 ```

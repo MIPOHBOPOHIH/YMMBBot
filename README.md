@@ -3,14 +3,12 @@
 </p>
 
 # YMMBBot
+Простой бот для отображения текущей песни.
+<br>**Поддерживается Моя Волна Через Last.fm**
 
-Простой бот для отображения текущей песни 
-
-**Поддерживается Моя Волна Через Last.fm**
-
-# Как использовать?:
-Сначала, вам надо установить Python и зависимости бота. Позже - создать самого бота у BotFather
-и включить у него Inline Mode.
+# Как использовать?
+Сначала, вам надо установить Python и зависимости бота.
+<br>Позже - создать самого бота у BotFather и включить у него Inline Mode.
 
 ## Скачиваем ymmbbot
 ```shell
@@ -20,34 +18,32 @@ cd ymmbbot
 ```
 
 ## Устанавливаем зависимости
-
 ```shell
-# Допустим, вы уже установили питон
+# Допустим, вы уже установили python3
 pip install pip --upgrade
 pip install -r requirements.txt
 ```
 
-После этого вы должны заполнить `config.py`
-После заполнения читайте следующую главу
+После этого вы должны заполнить `config.py`.
+<br>После заполнения читайте следующую главу.
 
 ## Запускаем
 
 ```shell
 python bot.py
 ```
-# Картинки-примеры:
-<figure>
-    <img src="images/channel.png"
-         alt="image1">
-    <figcaption>Сообщение от бота в канале</figcaption>
-</figure>
-<figure>
-    <img src="images/direct_messages.png"
-         alt="image2">
-    <figcaption>Ответ бота в личных сообщениях</figcaption>
-</figure>
-<figure>
-    <img src="images/inline.png"
-        alt="image3">
-    <figcaption>Inline в чатах</figcaption>
-</figure>
+# Картинки-примеры
+<table>
+  <tr>
+    <td>Сообщение от бота в канале</td>
+    <td><img src="images/channel.png"></td>
+  </tr>
+  <tr>
+    <td>Ответ бота в личных сообщениях</td>
+    <td><img src="images/direct_messages.png"></td>
+  </tr>
+  <tr>
+    <td>Inline в чатах</td>
+    <td><img src="images/inline.png"></td>
+  </tr>
+</table>
